@@ -1,4 +1,4 @@
-name: Sovereign-Ultimate-Forge
+name: Sovereign-God-Mode-Forge
 on: [push, workflow_dispatch]
 jobs:
   build:
@@ -9,25 +9,29 @@ jobs:
 
       - name: Sovereign Ignition & Compilation
         run: |
-          echo "🔥 بدء تشغيل مفاعل البصرة ذاتي الشفاء..."
+          echo "🔥 بدء مفاعل البصرة (وضع الإجبار المطلق)..."
           
-          # استخراج مسار الآيفون الرسمي من سيرفرات آبل
+          # استخراج مسار الآيفون الرسمي
           export SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
           
-          # [تكتيك الرادار]: البحث التلقائي عن ملف الكود الخاص بالجنرال مهما كان اسمه
-          SRC_FILE=$(ls Sovereign*.mm Sovereign*.cpp 2>/dev/null | head -n 1)
+          # [رادار السحق]: البحث عن أي ملف يبدأ بـ Sovereign مهما كان امتداده
+          TARGET_FILE=$(find . -maxdepth 1 -name "Sovereign*" -type f | head -n 1)
           
-          if [ -z "$SRC_FILE" ]; then
-            echo "❌ خطأ كارثي: لم أجد ملف الكود! تأكد أن الملف موجود في الواجهة الرئيسية."
+          if [ -z "$TARGET_FILE" ]; then
+            echo "❌ خطأ: لا يوجد أي ملف يبدأ بكلمة Sovereign في الواجهة الرئيسية."
             exit 1
           fi
           
-          echo "✅ تم رصد نخاع الهدف: $SRC_FILE"
+          echo "✅ تم القبض على الهدف: $TARGET_FILE"
+          echo "🔄 جاري تغيير الجينات البرمجية للملف بالقوة العسكرية..."
           
-          # أمر الصهر الإجباري (يجبر السيرفر على فهم الكود كـ Objective-C++ مهما كانت صيغته)
-          clang -x objective-c++ -dynamiclib -arch arm64 "$SRC_FILE" -o Sovereign_Weapon.dylib -isysroot $SDK_PATH -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -fobjc-arc
+          # تغيير اسم الملف وامتداده بالقوة لكي يقبله مترجم آبل
+          mv "$TARGET_FILE" wsam_core.mm
           
-          echo "✅ تمت عملية الصهر بنجاح يا جنرال!"
+          # أمر الصهر النهائي
+          clang -dynamiclib -arch arm64 wsam_core.mm -o Sovereign_Weapon.dylib -isysroot $SDK_PATH -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -fobjc-arc
+          
+          echo "✅ تمت عملية الصهر بنجاح يا جنرال وسام!"
 
       - name: Upload Sovereign Artifact
         uses: actions/upload-artifact@v4
