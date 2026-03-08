@@ -1,0 +1,15 @@
+name: Forge-Sovereign-Dylib
+on: [push]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compiling ARM64 Dylib
+        run: |
+          clang -dynamiclib -arch arm64 Sovereign_Agent_Core.mm -o wsam_soldier.dylib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -framework Foundation -framework UIKit
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wsam-Sovereign-Dylib
+          path: wsam_soldier.dylib
