@@ -1,15 +1,32 @@
-name: Forge-Sovereign-Dylib
-on: [push]
+name: Sovereign-Forge
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Compiling ARM64 Dylib
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Compile Sovereign Dylib
         run: |
-          clang -dynamiclib -arch arm64 Sovereign_Agent_Core.mm -o wsam_soldier.dylib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -framework Foundation -framework UIKit
-      - name: Upload Artifact
+          echo "🔥 بدء تشغيل مفاعل البصرة المليمتري..."
+          
+          # استخراج مسار نظام الآيفون ديناميكياً لتجنب أي خطأ
+          export SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          
+          # التأكد من وجود الملف قبل الصهر
+          if [ ! -f "Sovereign_Agent_Core.mm" ]; then
+            echo "❌ خطأ كارثي: ملف Sovereign_Agent_Core.mm غير موجود! تأكد من الاسم."
+            exit 1
+          fi
+          
+          # أمر الصهر السيادي
+          clang -dynamiclib -arch arm64 Sovereign_Agent_Core.mm -o Wsam_Core.dylib -isysroot $SDK_PATH -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -fobjc-arc
+          
+          echo "✅ تم الصهر بنجاح! النصر حليفنا."
+
+      - name: Upload Sovereign Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Wsam-Sovereign-Dylib
-          path: wsam_soldier.dylib
+          name: Wsam-Dylib-Ready
+          path: Wsam_Core.dylib
