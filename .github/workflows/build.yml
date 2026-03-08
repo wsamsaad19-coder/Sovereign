@@ -1,0 +1,137 @@
+name: Sovereign-Resilient-Forge
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-14 # استخدام نظام Sonoma المستقر
+    steps:
+      - name: Sovereign Ignition
+        run: |
+          echo "🔥 بدء تشغيل مفاعل البصرة السيادي للجنرال وسام..."
+          
+          # 1. كتابة النخاع البرمجي (الدايلب) مباشرة داخل السيرفر لتجنب أخطاء الأندرويد
+          cat << 'EOF' > sovereign_core.mm
+          #import <UIKit/UIKit.h>
+          #import <mach-o/dyld.h>
+          #import <mach/mach.h>
+          #import <Foundation/Foundation.h>
+
+          // [🎯] إحداثيات مركز القيادة - رابط الجنرال وسام الصافي
+          #define SERVER_API @"http://files.free.nf/wsam_core/dashboard_v50.php?api=true"
+
+          @interface SovereignUI : UIView
+          @property (nonatomic, strong) UILabel *msgLabel;
+          @property (nonatomic, strong) UIView *lamp;
+          @end
+
+          @implementation SovereignUI
+          - (instancetype)initWithFrame:(CGRect)frame {
+              self = [super initWithFrame:frame];
+              if (self) {
+                  self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
+                  self.layer.cornerRadius = 12;
+                  self.layer.borderColor = [UIColor cyanColor].CGColor;
+                  self.layer.borderWidth = 1.5;
+                  
+                  self.msgLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 5, 170, 20)];
+                  self.msgLabel.text = @"جاري تفعيل الحماية...";
+                  self.msgLabel.textColor = [UIColor yellowColor];
+                  self.msgLabel.font = [UIFont boldSystemFontOfSize:11];
+                  [self addSubview:self.msgLabel];
+                  
+                  self.lamp = [[UIView alloc] initWithFrame:CGRectMake(frame.size.width - 25, 10, 15, 15)];
+                  self.lamp.backgroundColor = [UIColor yellowColor];
+                  self.lamp.layer.cornerRadius = 7.5;
+                  self.lamp.layer.shadowColor = [UIColor yellowColor].CGColor;
+                  self.lamp.layer.shadowRadius = 5;
+                  self.lamp.layer.shadowOpacity = 1;
+                  [self addSubview:self.lamp];
+                  
+                  [self checkServerStatus];
+                  
+                  self.userInteractionEnabled = YES;
+                  UIPanGestureRecognizer *p = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
+                  [self addGestureRecognizer:p];
+              }
+              return self;
+          }
+
+          - (void)pan:(UIPanGestureRecognizer *)p {
+              CGPoint t = [p translationInView:self.superview];
+              self.center = CGPointMake(self.center.x + t.x, self.center.y + t.y);
+              [p setTranslation:CGPointZero inView:self.superview];
+          }
+
+          - (void)checkServerStatus {
+              NSURL *url = [NSURL URLWithString:SERVER_API];
+              [[[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData *d, NSURLResponse *r, NSError *e) {
+                  dispatch_async(dispatch_get_main_queue(), ^{
+                      if (e || !d) {
+                          self.msgLabel.text = @"فشل الاتصال بالسيرفر!";
+                          self.lamp.backgroundColor = [UIColor orangeColor];
+                          return;
+                      }
+                      NSDictionary *json = [NSJSONSerialization JSONObjectWithData:d options:0 error:nil];
+                      if (!json) return;
+                      
+                      NSString *status = json[@"status"];
+                      NSString *message = json[@"message"];
+                      
+                      if ([status isEqualToString:@"maintenance"]) {
+                          [self triggerLockdown:message];
+                      } else if ([status isEqualToString:@"safe"]) {
+                          self.msgLabel.text = @"الحماية مفعلة ✅";
+                          self.msgLabel.textColor = [UIColor greenColor];
+                          self.lamp.backgroundColor = [UIColor greenColor];
+                          self.lamp.layer.shadowColor = [UIColor greenColor].CGColor;
+                      } else if ([status isEqualToString:@"detected"]) {
+                          self.msgLabel.text = @"مكشوف! 🛑 اخرج فوراً";
+                          self.msgLabel.textColor = [UIColor redColor];
+                          self.lamp.backgroundColor = [UIColor redColor];
+                          self.lamp.layer.shadowColor = [UIColor redColor].CGColor;
+                      }
+                  });
+              }] resume];
+          }
+
+          - (void)triggerLockdown:(NSString *)m {
+              self.hidden = YES;
+              UIView *v = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+              v.backgroundColor = [UIColor blackColor];
+              UILabel *l = [[UILabel alloc] initWithFrame:v.bounds];
+              l.text = [NSString stringWithFormat:@"🛑 الهكر تحت الصيانة:\n%@", m];
+              l.textColor = [UIColor whiteColor];
+              l.textAlignment = NSTextAlignmentCenter;
+              l.numberOfLines = 0;
+              [v addSubview:l];
+              [[[UIApplication sharedApplication] keyWindow] addSubview:v];
+          }
+          @end
+
+          void __attribute__((constructor)) start() {
+              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                  UIWindow *w = [[UIApplication sharedApplication] keyWindow];
+                  SovereignUI *ui = [[SovereignUI alloc] initWithFrame:CGRectMake(50, 100, 200, 45)];
+                  [w addSubview:ui];
+              });
+          }
+          EOF
+
+          echo "✅ تم كتابة النخاع السيادي بنجاح."
+
+          # 2. جلب مسار الـ SDK الرسمي للآيفون (تعديل المسار لـ macOS 14)
+          export SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          
+          # 3. الصهر المباشر ARM64 بقوة Clang
+          clang -dynamiclib -arch arm64 sovereign_core.mm -o Sovereign_Wsam.dylib \
+          -isysroot $SDK_PATH \
+          -framework Foundation -framework UIKit -framework CoreGraphics \
+          -fobjc-arc -Os
+          
+          echo "✅ تمت عملية الصهر بنجاح يا سيادة الجنرال!"
+
+      - name: Deliver Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sovereign-Dylib-Ready
+          path: Sovereign_Wsam.dylib
